@@ -1,5 +1,9 @@
 const tuya = require('homebridge-tuyapi-extended');
 
+var Accessory,
+     Service,
+     Characteristic,
+     UUIDGen;
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
