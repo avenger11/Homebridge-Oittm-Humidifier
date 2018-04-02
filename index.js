@@ -74,6 +74,9 @@ OittmHumidifier.prototype.getCurrentHumidifierDehumidifierState = function(callb
     this.tuyaDebug('BEGIN HUMIDIFER STATUS ' + this.debugPrefix);
     var powerState = this.powerState;
 	var fanmode = this.fanmode;
+	var led_status = this.led_status;
+	var unknown = this.unknown;
+	var water_shortage = this.water_shortage;
 
     if(status !== undefined) {
       if(status.dps['1'] !== undefined) {
@@ -86,6 +89,20 @@ OittmHumidifier.prototype.getCurrentHumidifierDehumidifierState = function(callb
         this.fanmode = status.dps['6'];
       }
 
+      if(status.dps['11'] !== undefined) {
+		  led_status = status.dps['11'];
+        this.led_status = status.dps['11'];
+      }
+      
+      if(status.dps['12'] !== undefined) {
+		  unknown = status.dps['12'];
+        this.unknown = status.dps['12'];
+      }
+      
+	  if(status.dps['101'] !== undefined) {
+		  water_shortage = status.dps['101'];
+        this.water_shortage = status.dps['101'];
+      }
 
       if(!this.debugging) {
         this.log.info('Received update for Humidifier');
@@ -95,7 +112,7 @@ OittmHumidifier.prototype.getCurrentHumidifierDehumidifierState = function(callb
         this.tuyaDebug('[6] Fan Mode: ' + fanmode);
         this.tuyaDebug('[11] LED: ' + status.dps['11']);
         this.tuyaDebug('[12] ?????: ' + status.dps['12']);
-        this.tuyaDebug('[101] ?????: ' + status.dps['101']);
+        this.tuyaDebug('[101] water shortage: ' + status.dps['101']);
 
       }
   
@@ -152,6 +169,7 @@ OittmHumidifier.prototype.setActive = function(value, callback) {
   this.tuyaDebug('Current Powerstate: ' + this.powerState + ' Changing to: ' + value );
 
   if(this.deviceEnabled === true) {
+	 /** 
     var dpsTmp = {'1' : true }
     
     if (value === 1){
@@ -159,10 +177,23 @@ OittmHumidifier.prototype.setActive = function(value, callback) {
 	} else {
 		dpsTmp = {'1' : false}
 	}
+	*/
+	var dpsTmp = {
+		'1' : true,
+		'6' : this.fanmode,
+		'11' : true,
+		'12' : this.unknown,
+		'101' : this.water_shortage
+	};
+	
+	this.tuyaDebug(dpsTmp);
+	
+	//this.OittmHumidifier.set(this, {id: this.devId, 'dps': 1, set: true}).then(() => console.log('device was changed'))
 	
     // TODO: Skip if the light is already on...
     
-    this.OittmHumidifier.set(this, {'id': this.devId, 'dps' : dpsTmp}).then(result => {
+    
+    this.OittmHumidifier.set(this, {'devId': this.devId, 'dps' : dpsTmp}).then(result => {
         if(result) {
           this.tuyaDebug('TUYA SET HUMIDIFIER POWER ' + this.debugPrefix);
           this.tuyaDebug('Setting ' + this.name + ' dps: ' + '1' + ' device to: ' + value );
@@ -197,7 +228,7 @@ OittmHumidifier.prototype.devicePolling = function() {
 
   this.getCurrentHumidifierDehumidifierState(function(error, result) {
     if(error) {
-      this.tuyaDebug('Error getting light status');
+      this.tuyaDebug('Error Humidifier status');
     } else {
       // this.tuyaDebug(JSON.stringify(result, null, 8));
       // this.tuyaDebug(JSON.stringify(this, null, 8));
